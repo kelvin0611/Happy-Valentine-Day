@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>情人節快樂！</title>
+    <!-- 引入 Google Fonts 讓字體更可愛 -->
+    <link href="https://fonts.googleapis.com/css2?family=Varela+Round&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Varela Round', sans-serif;
+            background-color: #fdf2f8; /* 淺粉紅背景 */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden; /* 防止按鈕跑出畫面產生捲軸 */
+            text-align: center;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            /* 讓容器寬度固定，確保圖片大小一致時版面不會亂跳 */
+            width: 100%;
+            max-width: 600px; 
+        }
+
+        .gif-container {
+            height: 200px; /* 固定高度，避免圖片切換時按鈕上下跳動 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .gif-container img {
+            max-width: 200px;
+            max-height: 200px;
+            height: auto;
+            border-radius: 15px;
+            transition: all 0.3s ease;
+        }
+
+        h1 {
+            color: #be185d; /* 深粉紅文字 */
+            font-size: 2rem;
+            margin-bottom: 30px;
+            padding: 0 20px;
+            line-height: 1.5;
+            min-height: 96px; /* 預留兩行高度，避免文字變長時跳動 */
+        }
+
+        .buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            position: relative;
+            width: 100%;
+            height: 100px; /* 給按鈕區域一個固定高度範圍 */
+        }
+
+        button {
+            font-family: 'Varela Round', sans-serif;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        #yesBtn {
+            background-color: #db2777;
+            color: white;
+            padding: 12px 32px;
+            font-size: 18px; /* 初始大小 */
+            box-shadow: 0 4px 6px rgba(219, 39, 119, 0.3);
+            z-index: 100; /* 確保 Yes 按鈕永遠在最上層，可以遮擋 No */
+            position: relative; 
+        }
+
+        #yesBtn:hover {
+            background-color: #be185d;
+            transform: scale(1.05);
+        }
+
+        #noBtn {
+            background-color: #e5e7eb;
+            color: #374151;
+            padding: 12px 32px;
+            font-size: 18px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 50; /* 層級比 Yes 低，所以會被遮住 */
+            position: relative; /* 初始相對定位，點擊後會變 absolute */
+        }
+
+        #noBtn:hover {
+            background-color: #d1d5db;
+        }
+
+        /* 當成功時顯示的訊息樣式 */
+        .success-message {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .success-message h1 {
+            font-size: 2.5rem;
+            color: #db2777;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 提問畫面 -->
+    <div class="container" id="questionContainer">
+        <div class="gif-container">
+            <!-- 初始圖片 (線條小狗) -->
+            <img id="mainImage" src="https://s1.aigei.com/src/img/gif/7f/7fa165ee91f24684a45b4551ca48cf34.gif?e=2051020800&token=P7S2Xpzfz11vAkASLTkfHN7Fw-oOZBecqeJaxypL:VWN66uTYKDmRTU6-yMrHvElMkmM=" alt="Cute Line Dog">
+        </div>
+        <h1 id="questionText">情人節快樂！<br>你對今年的禮物滿意嗎？</h1>
+        
+        <div class="buttons">
+            <button id="yesBtn">滿意 (Yes)</button>
+            <button id="noBtn">不滿意 (No)</button>
+        </div>
+    </div>
+
+    <!-- 成功畫面 (預設隱藏) -->
+    <div class="success-message" id="successContainer">
+        <div class="gif-container">
+            <!-- 成功圖片 (線條小狗恩愛) -->
+            <img src="https://media.tenor.com/P5BB0cvFWzsAAAAM/line-dog.gif" alt="Line Dog Kiss">
+        </div>
+        <h1>太好了！我也愛你！💖</h1>
+    </div>
+
+    <script>
+        const yesBtn = document.getElementById('yesBtn');
+        const noBtn = document.getElementById('noBtn');
+        const questionContainer = document.getElementById('questionContainer');
+        const successContainer = document.getElementById('successContainer');
+        const mainImage = document.getElementById('mainImage');
+        const questionText = document.getElementById('questionText');
+
+        // 點擊 No 時切換的圖片清單 (各種情緒的狗狗)
+        const sadImages = [
+            "https://media.tenor.com/FZxj4M9HGSwAAAAM/jinsoulery-jinsoulburger.gif", // 哭哭
+            "https://i.chzbgr.com/full/5156853504/h15E719DA/goggie-gif-like-a-polaroid-picture", // 斜眼看 。。
+            "https://media.tenor.com/j1_q_Jk4sZUAAAAi/dog-cry.gif",  // 大哭
+            "https://media.tenor.com/STjTuyHNVmwAAAAM/dog-crying-meme-doggo-crys.gif", // 無辜眼
+            "https://media.tenor.com/yc_qNawzNVAAAAAM/shocked-dog.gif"   // 震驚
+        ];
+
+        // 點擊 No 時出現的文字清單
+        const messages = [
+            "不滿意 (No)",
+            "你確定嗎？",
+            "真的不喜歡？",
+            "再看一眼啦！",
+            "這是我挑很久的耶 😢",
+            "我會很傷心...",
+            "我會超級超級傷心...",
+            "我會難過到哭出來...",
+            "好啦我不問了...",
+            "開玩笑的，選 Yes 啦！"
+        ];
+        
+        let messageIndex = 0;
+
+        noBtn.addEventListener('click', () => {
+            // 1. 改變文字
+            messageIndex = (messageIndex + 1) % messages.length;
+            noBtn.innerText = messages[messageIndex];
+
+            // 2. 改變圖片 (隨機取一張 sadImages，確保不跟上一張重複最好，但隨機也行)
+            const randomImageIndex = Math.floor(Math.random() * sadImages.length);
+            mainImage.src = sadImages[randomImageIndex];
+
+            // 3. 讓 Yes 按鈕變大
+            const currentFontSize = window.getComputedStyle(yesBtn).fontSize;
+            const newFontSize = parseFloat(currentFontSize) * 1.4; // 每次放大 1.4 倍
+            yesBtn.style.fontSize = `${newFontSize}px`;
+            
+            // 讓按鈕的 padding 也跟著變大
+            const currentPadding = parseFloat(window.getComputedStyle(yesBtn).paddingTop);
+            yesBtn.style.padding = `${currentPadding * 1.2}px ${currentPadding * 2.5}px`;
+
+            // 4. 讓 No 按鈕隨機跳走 (絕對定位)
+            moveNoButton();
+        });
+
+        function moveNoButton() {
+            // 設定 No 按鈕為 fixed 或 absolute，這樣才能滿版亂跑
+            // 使用 fixed 可以確保它相對於視窗移動，不會被容器限制
+            noBtn.style.position = 'fixed'; 
+            
+            // 取得視窗寬高，減去按鈕本身大小，避免跑出視窗
+            const maxWidth = window.innerWidth - noBtn.offsetWidth;
+            const maxHeight = window.innerHeight - noBtn.offsetHeight;
+
+            // 產生隨機座標
+            const randomX = Math.random() * maxWidth;
+            const randomY = Math.random() * maxHeight;
+
+            noBtn.style.left = `${randomX}px`;
+            noBtn.style.top = `${randomY}px`;
+            
+            // 確保 z-index 比 Yes 按鈕低，這樣 Yes 變大時可以遮住它
+            noBtn.style.zIndex = '50'; 
+        }
+
+        // Yes 按鈕被點擊時
+        yesBtn.addEventListener('click', () => {
+            questionContainer.style.display = 'none'; // 隱藏問題
+            successContainer.style.display = 'flex';  // 顯示結果
+        });
+    </script>
+</body>
+</html>
