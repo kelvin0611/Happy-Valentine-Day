@@ -3,33 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>情人節快樂！</title>
-    <!-- 引入 Google Fonts 讓字體更可愛 -->
+    <title>Valentine's Day Card</title>
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Varela+Round&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Varela Round', sans-serif;
-            background-color: #fdf2f8; /* 淺粉紅背景 */
+            background-color: #fdf2f8; /* Light pink background */
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             height: 100vh;
             margin: 0;
-            overflow: hidden; /* 防止按鈕跑出畫面產生捲軸 */
+            overflow: hidden; /* Prevent scrollbars */
             text-align: center;
+        }
+
+        /* Language Toggle Button */
+        .lang-switch {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: white;
+            border: 2px solid #db2777;
+            color: #db2777;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .lang-switch:hover {
+            background-color: #db2777;
+            color: white;
         }
 
         .container {
             position: relative;
             z-index: 1;
-            /* 讓容器寬度固定，確保圖片大小一致時版面不會亂跳 */
             width: 100%;
             max-width: 600px; 
         }
 
         .gif-container {
-            height: 200px; /* 固定高度，避免圖片切換時按鈕上下跳動 */
+            height: 200px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -42,15 +62,19 @@
             height: auto;
             border-radius: 15px;
             transition: all 0.3s ease;
+            /* Add min dimensions to prevent layout shift during loading */
+            min-height: 150px; 
+            min-width: 150px;
+            object-fit: contain;
         }
 
         h1 {
-            color: #be185d; /* 深粉紅文字 */
+            color: #be185d;
             font-size: 2rem;
             margin-bottom: 30px;
             padding: 0 20px;
             line-height: 1.5;
-            min-height: 96px; /* 預留兩行高度，避免文字變長時跳動 */
+            min-height: 96px; 
         }
 
         .buttons {
@@ -61,7 +85,7 @@
             gap: 20px;
             position: relative;
             width: 100%;
-            height: 100px; /* 給按鈕區域一個固定高度範圍 */
+            height: 100px; 
         }
 
         button {
@@ -77,9 +101,9 @@
             background-color: #db2777;
             color: white;
             padding: 12px 32px;
-            font-size: 18px; /* 初始大小 */
+            font-size: 18px;
             box-shadow: 0 4px 6px rgba(219, 39, 119, 0.3);
-            z-index: 100; /* 確保 Yes 按鈕永遠在最上層，可以遮擋 No */
+            z-index: 100; /* Always on top */
             position: relative; 
         }
 
@@ -94,15 +118,14 @@
             padding: 12px 32px;
             font-size: 18px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            z-index: 50; /* 層級比 Yes 低，所以會被遮住 */
-            position: relative; /* 初始相對定位，點擊後會變 absolute */
+            z-index: 50; 
+            position: relative; 
         }
 
         #noBtn:hover {
             background-color: #d1d5db;
         }
 
-        /* 當成功時顯示的訊息樣式 */
         .success-message {
             display: none;
             flex-direction: column;
@@ -117,10 +140,13 @@
 </head>
 <body>
 
-    <!-- 提問畫面 -->
+    <!-- Language Switch Button -->
+    <button class="lang-switch" id="langBtn" onclick="toggleLanguage()">EN / 中文</button>
+
+    <!-- Question Screen -->
     <div class="container" id="questionContainer">
         <div class="gif-container">
-            <!-- 初始圖片 (線條小狗) -->
+            <!-- Initial Image (Specific Line Dog GIF) -->
             <img id="mainImage" src="https://s1.aigei.com/src/img/gif/7f/7fa165ee91f24684a45b4551ca48cf34.gif?e=2051020800&token=P7S2Xpzfz11vAkASLTkfHN7Fw-oOZBecqeJaxypL:VWN66uTYKDmRTU6-yMrHvElMkmM=" alt="Cute Line Dog">
         </div>
         <h1 id="questionText">情人節快樂！<br>你對今年的禮物滿意嗎？</h1>
@@ -131,94 +157,151 @@
         </div>
     </div>
 
-    <!-- 成功畫面 (預設隱藏) -->
+    <!-- Success Screen -->
     <div class="success-message" id="successContainer">
         <div class="gif-container">
-            <!-- 成功圖片 (線條小狗恩愛) -->
+            <!-- Success Image (Kissing Line Dogs) -->
             <img src="https://media.tenor.com/P5BB0cvFWzsAAAAM/line-dog.gif" alt="Line Dog Kiss">
         </div>
-        <h1>太好了！我也愛你！💖</h1>
+        <h1 id="successText">太好了！我也愛你！💖</h1>
     </div>
 
     <script>
+        // DOM Elements
         const yesBtn = document.getElementById('yesBtn');
         const noBtn = document.getElementById('noBtn');
         const questionContainer = document.getElementById('questionContainer');
         const successContainer = document.getElementById('successContainer');
         const mainImage = document.getElementById('mainImage');
         const questionText = document.getElementById('questionText');
+        const successText = document.getElementById('successText');
+        const langBtn = document.getElementById('langBtn');
 
-        // 點擊 No 時切換的圖片清單 (各種情緒的狗狗)
+        // State
+        let currentLang = 'zh'; // Default language
+        let messageIndex = 0;   // Track which "No" message we are on
+
+        // Text Content
+        const content = {
+            zh: {
+                question: "情人節快樂！<br>你對今年的禮物滿意嗎？",
+                yesBtn: "滿意 (Yes)",
+                noBtnDefault: "不滿意 (No)",
+                success: "太好了！我也愛你！💖",
+                messages: [
+                    "不滿意 (No)",
+                    "你確定嗎？",
+                    "真的不喜歡？",
+                    "再看一眼啦！",
+                    "這是我挑很久的耶 😢",
+                    "我會很傷心...",
+                    "我會超級超級傷心...",
+                    "我會難過到哭出來...",
+                    "好啦我不問了...",
+                    "開玩笑的，選 Yes 啦！"
+                ]
+            },
+            en: {
+                question: "Happy Valentine's Day!<br>Do you like your gift this year?",
+                yesBtn: "Yes",
+                noBtnDefault: "No",
+                success: "Yay! I love you too! 💖",
+                messages: [
+                    "No",
+                    "Are you sure?",
+                    "Really sure?",
+                    "Think again!",
+                    "I spent ages picking this! 😢",
+                    "I will be very sad...",
+                    "I will be super super sad...",
+                    "I'm gonna cry...",
+                    "Fine, I'll stop asking...",
+                    "Just kidding, say Yes!"
+                ]
+            }
+        };
+
+        // Sad/Funny images for "No" clicks (Updated list)
         const sadImages = [
-            "https://media.tenor.com/FZxj4M9HGSwAAAAM/jinsoulery-jinsoulburger.gif", // 哭哭
-            "https://i.chzbgr.com/full/5156853504/h15E719DA/goggie-gif-like-a-polaroid-picture", // 斜眼看 。。
-            "https://media.tenor.com/j1_q_Jk4sZUAAAAi/dog-cry.gif",  // 大哭
-            "https://media.tenor.com/STjTuyHNVmwAAAAM/dog-crying-meme-doggo-crys.gif", // 無辜眼
-            "https://media.tenor.com/yc_qNawzNVAAAAAM/shocked-dog.gif"   // 震驚
+            "https://media.tenor.com/FZxj4M9HGSwAAAAM/jinsoulery-jinsoulburger.gif", // Crying
+            "https://i.chzbgr.com/full/5156853504/h15E719DA/goggie-gif-like-a-polaroid-picture", // Side eye
+            "https://media.tenor.com/j1_q_Jk4sZUAAAAi/dog-cry.gif",  // Bawling
+            "https://media.tenor.com/STjTuyHNVmwAAAAM/dog-crying-meme-doggo-crys.gif", // Innocent eyes
+            "https://media.tenor.com/yc_qNawzNVAAAAAM/shocked-dog.gif"   // Shocked
         ];
 
-        // 點擊 No 時出現的文字清單
-        const messages = [
-            "不滿意 (No)",
-            "你確定嗎？",
-            "真的不喜歡？",
-            "再看一眼啦！",
-            "這是我挑很久的耶 😢",
-            "我會很傷心...",
-            "我會超級超級傷心...",
-            "我會難過到哭出來...",
-            "好啦我不問了...",
-            "開玩笑的，選 Yes 啦！"
-        ];
-        
-        let messageIndex = 0;
+        // --- PRELOAD IMAGES FUNCTION ---
+        // This forces the browser to download all images in the background as soon as the page loads.
+        function preloadImages() {
+            for (let i = 0; i < sadImages.length; i++) {
+                const img = new Image();
+                img.src = sadImages[i];
+            }
+        }
+        // Call the function immediately
+        preloadImages();
+
+
+        // Language Toggle Function
+        function toggleLanguage() {
+            currentLang = currentLang === 'zh' ? 'en' : 'zh';
+            updateText();
+        }
+
+        function updateText() {
+            const c = content[currentLang];
+            questionText.innerHTML = c.question;
+            yesBtn.innerText = c.yesBtn;
+            successText.innerText = c.success;
+            
+            // If the user hasn't clicked No yet (or just started), reset/update the No button text
+            // If they are deep in the loop, we try to map the current index to the new language
+            noBtn.innerText = c.messages[messageIndex % c.messages.length];
+        }
+
+        // --- Interaction Logic ---
 
         noBtn.addEventListener('click', () => {
-            // 1. 改變文字
-            messageIndex = (messageIndex + 1) % messages.length;
-            noBtn.innerText = messages[messageIndex];
+            // 1. Advance text index
+            messageIndex = (messageIndex + 1) % content[currentLang].messages.length;
+            noBtn.innerText = content[currentLang].messages[messageIndex];
 
-            // 2. 改變圖片 (隨機取一張 sadImages，確保不跟上一張重複最好，但隨機也行)
+            // 2. Change Image
             const randomImageIndex = Math.floor(Math.random() * sadImages.length);
             mainImage.src = sadImages[randomImageIndex];
 
-            // 3. 讓 Yes 按鈕變大
+            // 3. Make Yes Button Bigger
             const currentFontSize = window.getComputedStyle(yesBtn).fontSize;
-            const newFontSize = parseFloat(currentFontSize) * 1.4; // 每次放大 1.4 倍
+            const newFontSize = parseFloat(currentFontSize) * 1.4; 
             yesBtn.style.fontSize = `${newFontSize}px`;
             
-            // 讓按鈕的 padding 也跟著變大
+            // Adjust padding to keep proportions
             const currentPadding = parseFloat(window.getComputedStyle(yesBtn).paddingTop);
             yesBtn.style.padding = `${currentPadding * 1.2}px ${currentPadding * 2.5}px`;
 
-            // 4. 讓 No 按鈕隨機跳走 (絕對定位)
+            // 4. Move No Button Randomly
             moveNoButton();
         });
 
         function moveNoButton() {
-            // 設定 No 按鈕為 fixed 或 absolute，這樣才能滿版亂跑
-            // 使用 fixed 可以確保它相對於視窗移動，不會被容器限制
-            noBtn.style.position = 'fixed'; 
+            noBtn.style.position = 'fixed'; // Use fixed to allow full screen movement
             
-            // 取得視窗寬高，減去按鈕本身大小，避免跑出視窗
             const maxWidth = window.innerWidth - noBtn.offsetWidth;
             const maxHeight = window.innerHeight - noBtn.offsetHeight;
 
-            // 產生隨機座標
             const randomX = Math.random() * maxWidth;
             const randomY = Math.random() * maxHeight;
 
             noBtn.style.left = `${randomX}px`;
             noBtn.style.top = `${randomY}px`;
             
-            // 確保 z-index 比 Yes 按鈕低，這樣 Yes 變大時可以遮住它
+            // Keep Z-index lower than Yes button so it can be covered
             noBtn.style.zIndex = '50'; 
         }
 
-        // Yes 按鈕被點擊時
         yesBtn.addEventListener('click', () => {
-            questionContainer.style.display = 'none'; // 隱藏問題
-            successContainer.style.display = 'flex';  // 顯示結果
+            questionContainer.style.display = 'none';
+            successContainer.style.display = 'flex'; 
         });
     </script>
 </body>
